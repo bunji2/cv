@@ -71,7 +71,6 @@ func RetrieveFrame(capture *CvCapture) *IplImageT {
   GetCaptureProperty returns the specified VideoCapture property
 
   C: double cvGetCaptureProperty(CvCapture* capture, int property_id)
-
   param: propId – Property identifier.
 */
 func GetCaptureProperty(capture *CvCapture, property_id int) float {
@@ -82,7 +81,6 @@ func GetCaptureProperty(capture *CvCapture, property_id int) float {
   SetCaptureProperty sets a property in the VideoCapture.
 
   C: int cvSetCaptureProperty(CvCapture* capture, int property_id, double value)
-
   param: propId – Property identifier.  
 */
 func SetCaptureProperty(capture *CaptureT, property_id int, value float) int {
@@ -94,10 +92,8 @@ func SetCaptureProperty(capture *CaptureT, property_id int, value float) int {
 DecodeImage reads an image from a buffer in memory.
 
   C: IplImage* cvDecodeImage(const CvMat* buf, int iscolor=CV_LOAD_IMAGE_COLOR)
-
   param: buf – Input array or vector of bytes.
   param: iscolor – The same flags as in LoadImage.
-  
 */
 func DecodeImage(buf *MatT, iscolor...int) *IplImageT {
 	iscolor_ := C.CV_LOAD_IMAGE_COLOR
@@ -111,10 +107,8 @@ func DecodeImage(buf *MatT, iscolor...int) *IplImageT {
 DecodeImageM reads an image from a buffer in memory.
 
   C: CvMat* cvDecodeImageM(const CvMat* buf, int iscolor=CV_LOAD_IMAGE_COLOR)
-
   param: buf – Input array or vector of bytes.
   param: iscolor – The same flags as in LoadImage.
-  
 */
 func DecodeImageM(buf *MatT, iscolor...int) *MatT {
 	iscolor_ := C.CV_LOAD_IMAGE_COLOR
@@ -128,11 +122,8 @@ func DecodeImageM(buf *MatT, iscolor...int) *MatT {
 EncodeImage encodes an image into a memory buffer.
 
   C: CvMat* cvEncodeImage(const char* ext, const CvArr* image, const int* params=0 )
-
   param: ext – File extension that defines the output format.
-
   param: img – Image to be written.
-
   param: params – Format-specific parameters.
 */
 func EncodeImage(ext string, image *IplImageT, params...int) *MatT{
@@ -147,22 +138,16 @@ func EncodeImage(ext string, image *IplImageT, params...int) *MatT{
 SaveImage saves an image to a specified file.
 
   C: int cvSaveImage(const char* filename, const CvArr* image, const int* params=0 )
-
   param: filename – Name of the file.
-
   param: image – Image to be saved.
-
   param: params – Format-specific save parameters encoded as pairs 
   paramId_1, paramValue_1, paramId_2, paramValue_2, ... . The following 
   parameters are currently supported:
-
   For JPEG, it can be a quality ( CV_IMWRITE_JPEG_QUALITY ) from 0 to 100 
   (the higher is the better). Default value is 95.
-
   For PNG, it can be the compression level ( CV_IMWRITE_PNG_COMPRESSION ) 
   from 0 to 9. A higher value means a smaller size and longer compression 
   time. Default value is 3.
-
   For PPM, PGM, or PBM, it can be a binary format flag ( CV_IMWRITE_PXM_BINARY 
   ), 0 or 1. Default value is 1.
 */
@@ -179,21 +164,13 @@ func SaveImage(filename string, image *IplImageT, params...int) int {
 LoadImage loads an image from a file.
 
   C: IplImage* cvLoadImage(const char* filename, int iscolor=CV_LOAD_IMAGE_COLOR )
-
   param: filename – Name of file to be loaded.
-
   param: iscolor – Flags specifying the color type of a loaded image:
-
   CV_LOAD_IMAGE_ANYDEPTH - If set, return 16-bit/32-bit image when the input has the corresponding depth, otherwise convert it to 8-bit.
-
   CV_LOAD_IMAGE_COLOR - If set, always convert image to the color one
-
   CV_LOAD_IMAGE_GRAYSCALE - If set, always convert image to the grayscale one
-
   >0 Return a 3-channel color image.
-
   =0 Return a grayscale image.
-
   <0 Return the loaded image as is (with alpha channel).
 */
 func LoadImage(filename string, iscolor...int) *IplImageT{
@@ -209,17 +186,11 @@ type TrackbarCallback C.TrackbarCallback
 Creates a trackbar and attaches it to the specified window.
 
   C: int cvCreateTrackbar(const char* trackbar_name, const char* window_name, int* value, int count, CvTrackbarCallback on_change=NULL )
-
   param: trackbar_name – Name of the created trackbar.
-
   param: window_name – Name of the window that will be used as a parent of the created trackbar.
-
   param: value – Optional pointer to an integer variable whose value reflects the position of the slider. Upon creation, the slider position is defined by this variable.
-
   param: count – Maximal position of the slider. The minimal position is always 0.
-
   param: onChange – Pointer to the function to be called every time the slider changes position. This function should be prototyped as void Foo(int,void*); , where the first parameter is the trackbar position and the second parameter is the user data (see the next parameter). If the callback is the NULL pointer, no callbacks are called, but only value is updated.
-
 */
 func CreateTrackbar(trackbar_name string, window_name string, value *C.int, count int, on_change... CvTrackbarCallback) int {
 	on_change_ := TrackbarCallback(nil)
