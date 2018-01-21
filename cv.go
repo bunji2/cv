@@ -63,7 +63,7 @@ video file), the methods return false and the functions return NULL pointer.
   whatever you want with the copy.
 
 */
-func RetrieveFrame(capture *CvCapture) *IplImageT {
+func RetrieveFrame(capture *CaptureT) *IplImageT {
 	return C.cvRetrieveFrame(unsafe.Pointer(capture), C.int(0))
 }
 
@@ -73,7 +73,7 @@ func RetrieveFrame(capture *CvCapture) *IplImageT {
   C: double cvGetCaptureProperty(CvCapture* capture, int property_id)
   param: propId – Property identifier.
 */
-func GetCaptureProperty(capture *CvCapture, property_id int) float {
+func GetCaptureProperty(capture *CaptureT, property_id int) float {
 	return float(C.cvGetCaptureProperty(unsafe.Pointer(capture), C.int(property_id)))
 }
 
@@ -144,12 +144,12 @@ SaveImage saves an image to a specified file.
   paramId_1, paramValue_1, paramId_2, paramValue_2, ... . The following 
   parameters are currently supported:
   For JPEG, it can be a quality ( CV_IMWRITE_JPEG_QUALITY ) from 0 to 100 
-  (the higher is the better). Default value is 95.
+   (the higher is the better). Default value is 95.
   For PNG, it can be the compression level ( CV_IMWRITE_PNG_COMPRESSION ) 
   from 0 to 9. A higher value means a smaller size and longer compression 
-  time. Default value is 3.
+   time. Default value is 3.
   For PPM, PGM, or PBM, it can be a binary format flag ( CV_IMWRITE_PXM_BINARY 
-  ), 0 or 1. Default value is 1.
+   ), 0 or 1. Default value is 1.
 */
 func SaveImage(filename string, image *IplImageT, params...int) int {
 	params_ := C.int(0)
@@ -166,12 +166,12 @@ LoadImage loads an image from a file.
   C: IplImage* cvLoadImage(const char* filename, int iscolor=CV_LOAD_IMAGE_COLOR )
   param: filename – Name of file to be loaded.
   param: iscolor – Flags specifying the color type of a loaded image:
-  CV_LOAD_IMAGE_ANYDEPTH - If set, return 16-bit/32-bit image when the input has the corresponding depth, otherwise convert it to 8-bit.
-  CV_LOAD_IMAGE_COLOR - If set, always convert image to the color one
-  CV_LOAD_IMAGE_GRAYSCALE - If set, always convert image to the grayscale one
-  >0 Return a 3-channel color image.
-  =0 Return a grayscale image.
-  <0 Return the loaded image as is (with alpha channel).
+   CV_LOAD_IMAGE_ANYDEPTH - If set, return 16-bit/32-bit image when the input has the corresponding depth, otherwise convert it to 8-bit.
+   CV_LOAD_IMAGE_COLOR - If set, always convert image to the color one
+   CV_LOAD_IMAGE_GRAYSCALE - If set, always convert image to the grayscale one
+   >0 Return a 3-channel color image.
+   =0 Return a grayscale image.
+   <0 Return the loaded image as is (with alpha channel).
 */
 func LoadImage(filename string, iscolor...int) *IplImageT{
 	iscolor_ := C.CV_LOAD_IMAGE_COLOR 
