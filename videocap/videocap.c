@@ -108,7 +108,7 @@ void videocap2(int cam_idx, const char* title, int w, int h, int wait_ms, int us
             CV_FOURCC_PROMPT,//圧縮手法とパラメータの選択ダイアログ
 //      CV_FOURCC ('P','I','M','1'), //MPEG-1
 //      CV_FOURCC('D','I','B',' '), // 非圧縮
-            15, //fps
+            1000/wait_ms, //fps
             cvSize ((int) w, (int) h), 
             1
         );
