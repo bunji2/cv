@@ -5,7 +5,10 @@ TARGETS=smooth.exe \
 	threshold2.exe \
 	videocap.exe \
 	videowrite.exe \
-	videocap2.exe
+	videocap2.exe \
+	preview_combine.exe \
+	preview_resize.exe \
+	resize.exe
 
 CFLAGS=-D_GLIBCXX_USE_CXX11_ABI=0 \
 	-IC:/opencv_libs/opencv-2.4.13.5/include
