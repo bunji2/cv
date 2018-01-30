@@ -1,3 +1,5 @@
+# Makefile for MINGW64/MSYS2 + opencv-2.4.13.5
+
 TARGETS=smooth.exe \
 	filter.exe \
 	makeborder.exe \
