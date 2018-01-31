@@ -10,15 +10,16 @@ TARGETS=smooth.exe \
 	videocap2.exe \
 	preview_combine.exe \
 	preview_resize.exe \
-	resize.exe
+	resize.exe\
+	face_detect.exe
 
 CFLAGS=-D_GLIBCXX_USE_CXX11_ABI=0 \
 	-IC:/opencv_libs/opencv-2.4.13.5/include
 
 LIBS=-LC:/opencv_libs/opencv-2.4.13.5/x64/mingw/staticlib \
 	-static -lopencv_photo2413 \
-	-lopencv_imgproc2413 \
 	-lopencv_objdetect2413 \
+	-lopencv_imgproc2413 \
 	-lopencv_highgui2413 \
 	-lopencv_core2413 \
 	-lIlmImf \
