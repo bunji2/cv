@@ -11,7 +11,9 @@ TARGETS=smooth.exe \
 	preview_combine.exe \
 	preview_resize.exe \
 	resize.exe\
-	face_detect.exe
+	face_detect.exe \
+	ohtsu.exe \
+	smooth.exe
 
 CFLAGS=-D_GLIBCXX_USE_CXX11_ABI=0 \
 	-IC:/opencv_libs/opencv-2.4.13.5/include
