@@ -21,22 +21,22 @@ const (
 	default_width = 640
 	default_height = 480
 	default_wait_ms = 100
-	default_title = "Cam"
-	default_use_filter = false
+	default_filter = 0
 )
+
 var cam_idx, width, height, wait_ms int
 var size, filepath string
-var use_filter bool
+var filter int
 
 func main() {
 	initialize()
-	videocap(cam_idx, default_title, width, height, wait_ms, use_filter, filepath)
+	videocap(cam_idx, width, height, wait_ms, filter, filepath)
 	fmt.Println("done.")
 }
 
 func initialize() {
 	flag.StringVar(&size, "size", default_size, "the size to be captured")
-	flag.BoolVar(&use_filter, "filter", default_use_filter, "the flag for using filter")
+	flag.IntVar(&filter, "filter", default_filter, "the number of filter. 0:none, 1:binary+edge, 2:ohtsu")
 	flag.IntVar(&cam_idx, "cam_idx", default_cam_idx, "the camera index to use")
 	flag.StringVar(&filepath, "file", default_filepath, "the path to record video")
 	flag.IntVar(&wait_ms, "wait_ms", default_wait_ms, "the interval ms")
@@ -72,32 +72,21 @@ func parse_size(s string) (w, h int, ok bool) {
 	ok = true
 	return
 }
-/*
-func videocap(cam_idx int, title string, w, h, wait_ms int) {
-	title_c := C.CString(title)
-	defer C.free(unsafe.Pointer(title_c))
-	C.videocap(C.int(cam_idx), title_c, C.int(w), C.int(h), C.int(wait_ms))
-}
-*/
 
-func videocap(cam_idx int, title string, w, h, wait_ms int, use_filter bool, filepath...string) {
+func videocap(cam_idx, w, h, wait_ms, filter int, filepath...string) {
 	filepath_ := ""
 	if len(filepath)>0 {
 		filepath_ = filepath[0]
 	}
-	use_filter_ := 0
-	if use_filter {
-		use_filter_ = 1
-	}
-	if filepath_ == "" {
-		title_c := C.CString(title)
-		defer C.free(unsafe.Pointer(title_c))
-		C.videocap(C.int(cam_idx), title_c, C.int(w), C.int(h), C.int(wait_ms), C.int(use_filter_))
-		return
-	}
-	title_c := C.CString(title)
-	defer C.free(unsafe.Pointer(title_c))
 	filepath_c := C.CString(filepath_)
 	defer C.free(unsafe.Pointer(filepath_c))
-	C.videocap2(C.int(cam_idx), title_c, C.int(w), C.int(h), C.int(wait_ms), C.int(use_filter_), filepath_c)
+	p := C.new_param(
+		C.int(cam_idx), 
+		C.int(w), 
+		C.int(h), 
+		C.int(wait_ms), 
+		C.int(filter), 
+		filepath_c)
+	defer C.release_param(&p)
+	C.videocap(p)
 }

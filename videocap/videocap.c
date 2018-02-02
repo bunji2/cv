@@ -4,11 +4,32 @@
 http://opencv.jp/sample/video_io.html
 */
 
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+#include "videocap.h"
 #include <ctype.h>
 
-#define GAMMA_TRACKBAR_NAME "gamma"
+param* new_param(
+    int cam_idx, 
+    int w, 
+    int h, 
+    int wait_ms, 
+    int filter, 
+    char* filename
+) {
+    param *p = (param*)cvAlloc(sizeof(param));
+    p->cam_idx = cam_idx;
+    p->title = "Cap";
+    p->w = w;
+    p->h = h;
+    p->wait_ms = wait_ms;
+    p->filter = filter;
+    p->filename = filename;
+    p->vw = 0;
+    return p;
+}
+
+void release_param(param **p) {
+    cvFree(p);
+}
 
 // ガンマ補正
 // 参考URL http://imagingsolution.blog107.fc2.com/blog-entry-166.html
@@ -18,7 +39,7 @@ IplImage* cvGamma(IplImage* src, int g) {
 
     //printf("#gamma = %d\n", g);
     dst = cvCreateImage(
-        cvSize(src->width, src->height), 
+        cvGetSize (src), 
         src->depth, 
         src->nChannels);
 	cvCopy(src, dst, NULL);
@@ -37,6 +58,14 @@ IplImage* cvGamma(IplImage* src, int g) {
     return dst;
 }
 
+IplImage *conv_ohtsu(IplImage *src_img) {
+    //IplImage *dst_img = cvCreateImage (cvGetSize (src_img), IPL_DEPTH_8U, 1);
+    IplImage *dst_img = cvCloneImage (src_img);
+    cvSmooth (src_img, src_img, CV_GAUSSIAN, 5, 0, 0, 0);
+    //cvThreshold (src_img, dst_img, 0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
+    cvThreshold (src_img, dst_img, 90, 255, CV_THRESH_BINARY);
+    return dst_img;
+}
 
 IplImage * filter (IplImage *src_img)
 {
@@ -81,38 +110,39 @@ IplImage * filter (IplImage *src_img)
 }
 
 void cap (
-    int index, 
-    const char* title, 
-    double w, double h, 
-    int wait_ms, 
-    IplImage* (*func)(IplImage *), 
-    CvVideoWriter *vw
+    param *p
 ) {
     CvCapture *capture = 0;
     IplImage *frame = 0, *frame2 = 0, *frame3 = 0;
     // (1)コマンド引数によって指定された番号のカメラに対するキャプチャ構造体を作成する
-    capture = cvCreateCameraCapture (index);
+    capture = cvCreateCameraCapture (p->cam_idx);
 
     // (2)キャプチャサイズを設定する．
     /* この設定は，利用するカメラに依存する */
-    cvSetCaptureProperty (capture, CV_CAP_PROP_FRAME_WIDTH, w);
-    cvSetCaptureProperty (capture, CV_CAP_PROP_FRAME_HEIGHT, h);
+    cvSetCaptureProperty (capture, CV_CAP_PROP_FRAME_WIDTH, (double)(p->w));
+    cvSetCaptureProperty (capture, CV_CAP_PROP_FRAME_HEIGHT, (double)(p->h));
 
     // (3)カメラから画像をキャプチャする
     // キー入力があるまで繰り返し
-    while (cvWaitKey (wait_ms) == -1) {
+    while (cvWaitKey (p->wait_ms) == -1) {
         frame = cvQueryFrame (capture);
-        frame2 = cvGamma(frame,  cvGetTrackbarPos(GAMMA_TRACKBAR_NAME, title));
-        if (func) {
-            frame3 = func(frame2);
+        frame2 = cvGamma(frame,  cvGetTrackbarPos(GAMMA_TRACKBAR_NAME, p->title));
+        switch (p->filter) {
+            case 1:
+                frame3 = filter(frame2);
+                break;
+            case 2:
+                frame3 = conv_ohtsu(frame2);
+                break;
+            default:
+                frame3 = frame2;
         }
-        if (!frame3) {
-            frame3 = frame2;
+        cvShowImage (p->title, frame3);
+
+        if (p->vw) {
+            cvWriteFrame (p->vw, frame3);
         }
-        cvShowImage (title, frame3);
-        if (vw) {
-            cvWriteFrame (vw, frame3);
-        }
+
         if (frame3 != frame2) {
             cvReleaseImage (&frame3);
         }
@@ -122,42 +152,36 @@ void cap (
     cvReleaseCapture (&capture);
 }
 
-void videocap(int cam_idx, const char* title, int w, int h, int wait_ms, int use_filter) {
+void videocap(param *p) {
     int gamma_value = 1;
-    cvNamedWindow (title, CV_WINDOW_AUTOSIZE);
-    cvCreateTrackbar(GAMMA_TRACKBAR_NAME, title, &gamma_value, 3, NULL);
-
-    if (!use_filter) {
-        cap(cam_idx, title, (double)w, (double)h, wait_ms, 0, 0);    
-    } else {
-        cap(cam_idx, title, (double)w, (double)h, wait_ms, filter, 0);
+    if (p->filename && p->filename[0] != 0x0) {
+        p->filename = 0;
     }
-    cvDestroyWindow (title);
-}
 
-void videocap2(int cam_idx, const char* title, int w, int h, int wait_ms, int use_filter, const char* filename) {
-    CvVideoWriter *vw = 0;
-    if (filename) {
-        vw = cvCreateVideoWriter (
-            filename, 
+//    p->vw = 0;
+//    p->filename = 0;
+    if (p->filename) {
+        p->vw = cvCreateVideoWriter (
+            p->filename, 
             CV_FOURCC_PROMPT,//圧縮手法とパラメータの選択ダイアログ
 //      CV_FOURCC ('P','I','M','1'), //MPEG-1
 //      CV_FOURCC('D','I','B',' '), // 非圧縮
-            1000/wait_ms, //fps
-            cvSize ((int) w, (int) h), 
+            1000/p->wait_ms, //fps
+            cvSize (p->w, p->h), 
             1
         );
-    }    cvNamedWindow (title, CV_WINDOW_AUTOSIZE);
-    if (!use_filter) {
-        cap(cam_idx, title, (double)w, (double)h, wait_ms, 0, vw);
-    } else {
-        cap(cam_idx, title, (double)w, (double)h, wait_ms, filter, vw);
     }
-    cvDestroyWindow (title);
-    if (vw) {
-        cvReleaseVideoWriter (&vw);
-        vw = 0;
+
+    cvNamedWindow (p->title, CV_WINDOW_AUTOSIZE);
+    cvCreateTrackbar(GAMMA_TRACKBAR_NAME, p->title, &gamma_value, 3, NULL);
+    cap(p);
+    cvDestroyWindow (p->title);
+
+    if (p->vw) {
+        cvReleaseVideoWriter (& p->vw);
+        p->vw = 0;
     }
+
 }
 
 /*
