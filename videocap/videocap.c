@@ -154,7 +154,7 @@ void cap (
 
 void videocap(param *p) {
     int gamma_value = 1;
-    if (p->filename && p->filename[0] != 0x0) {
+    if (p->filename && p->filename[0] == 0x0) {
         p->filename = 0;
     }
 
