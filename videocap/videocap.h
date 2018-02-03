@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #define GAMMA_TRACKBAR_NAME "gamma"
+#define FILTER_TRACKBAR_NAME "filter"
 
 typedef struct _param {
     int cam_idx;
@@ -12,6 +13,7 @@ typedef struct _param {
     int w;
     int h;
     int wait_ms;
+    int face_detect;
     int filter;
     char* filename;
     CvVideoWriter *vw;
@@ -22,6 +24,7 @@ param* new_param(
     int w, 
     int h, 
     int wait_ms, 
+    int face_detect,
     int filter, 
     char* filename
 );

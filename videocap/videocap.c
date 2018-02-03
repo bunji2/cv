@@ -12,6 +12,7 @@ param* new_param(
     int w, 
     int h, 
     int wait_ms, 
+    int face_detect, 
     int filter, 
     char* filename
 ) {
@@ -22,6 +23,7 @@ param* new_param(
     p->h = h;
     p->wait_ms = wait_ms;
     p->filter = filter;
+    p->face_detect = face_detect;
     p->filename = filename;
     p->vw = 0;
     return p;
@@ -29,6 +31,90 @@ param* new_param(
 
 void release_param(param **p) {
     cvFree(p);
+}
+
+// 顔認識
+
+#define HAARCASCADE "haarcascade_frontalface_alt.xml"
+#define SCALE 1.3
+
+typedef struct {
+    CvHaarClassifierCascade* cvHCC;
+    CvMemStorage* cvMStr;
+}   FaceDetectCtx;
+
+FaceDetectCtx *new_fd_ctx() {
+    FaceDetectCtx *ctx = (FaceDetectCtx*)malloc(sizeof(FaceDetectCtx));
+	// 正面顔検出器の読み込み
+    ctx->cvHCC = (CvHaarClassifierCascade*)cvLoad(
+       HAARCASCADE, NULL, NULL, NULL);
+
+	// 検出に必要なメモリストレージを用意する
+	ctx->cvMStr = cvCreateMemStorage(0);
+
+    return ctx;
+}
+
+void release_fd_ctx(FaceDetectCtx *ctx) {
+    // 生成したメモリストレージを解放
+	cvReleaseMemStorage(&ctx->cvMStr);
+	// カスケード識別器の解放
+	cvReleaseHaarClassifierCascade(&ctx->cvHCC);
+    free(ctx);
+}
+
+void face_detect(FaceDetectCtx *ctx, IplImage *frame) {
+	// 顔検出した矩形領域のリストを格納する変数
+	CvSeq* faces;
+    // 顔検出した矩形のオフセットとサイズ用の変数
+    CvRect* faceRect;
+    // グレイスケール化した画像と、顔検出の対象となる画像用の変数
+	IplImage *gray = 0, *detect_frame = 0;
+
+	// 読み込んだ画像のグレースケール化
+	gray = cvCreateImage(
+        cvSize(frame->width, frame->height), 
+        IPL_DEPTH_8U, 
+        1);
+	cvCvtColor(frame, gray, CV_BGR2GRAY);
+
+	// グレースケール画像のヒストグラムを均一化
+	detect_frame = cvCreateImage(
+        cvSize((frame->width / SCALE), (frame->height / SCALE)), 
+        IPL_DEPTH_8U, 
+        1);
+	cvResize(gray, detect_frame, CV_INTER_LINEAR);
+	cvEqualizeHist(detect_frame, detect_frame);
+
+	// 画像中から検出対象の情報を取得する
+	faces = cvHaarDetectObjects(
+        detect_frame, 
+        ctx->cvHCC, 
+        ctx->cvMStr, 
+        1.1, 
+        2, 
+        CV_HAAR_DO_CANNY_PRUNING, 
+        cvSize(30, 30), 
+        cvSize(0,0) );
+
+    // 検出したすべての顔の矩形領域について処理
+	for (int i = 0; i < faces->total; i++) {
+		// 検出情報から顔の位置情報を取得
+		faceRect = (CvRect*)cvGetSeqElem(faces, i);
+
+		// 取得した顔の位置情報に基づき、矩形描画を行う
+		cvRectangle(frame,
+			cvPoint(faceRect->x * SCALE, faceRect->y * SCALE),
+			cvPoint((faceRect->x + faceRect->width) * SCALE,
+            (faceRect->y + faceRect->height) * SCALE),
+			CV_RGB(255, 0 ,0),
+			3,
+            CV_AA,
+            0
+        );
+	}
+    cvReleaseImage(&gray);
+    cvReleaseImage(&detect_frame);
 }
 
 // ガンマ補正
@@ -114,6 +200,12 @@ void cap (
 ) {
     CvCapture *capture = 0;
     IplImage *frame = 0, *frame2 = 0, *frame3 = 0;
+    FaceDetectCtx *ctx = 0;
+
+    if (p->face_detect) {
+        ctx = new_fd_ctx();
+    }
+
     // (1)コマンド引数によって指定された番号のカメラに対するキャプチャ構造体を作成する
     capture = cvCreateCameraCapture (p->cam_idx);
 
@@ -121,22 +213,36 @@ void cap (
     /* この設定は，利用するカメラに依存する */
     cvSetCaptureProperty (capture, CV_CAP_PROP_FRAME_WIDTH, (double)(p->w));
     cvSetCaptureProperty (capture, CV_CAP_PROP_FRAME_HEIGHT, (double)(p->h));
+    p->w = (int)cvGetCaptureProperty (capture, CV_CAP_PROP_FRAME_WIDTH);
+    p->h = (int)cvGetCaptureProperty (capture, CV_CAP_PROP_FRAME_HEIGHT);
+    printf("size = %dx%d\n", p->w, p->h);
 
     // (3)カメラから画像をキャプチャする
     // キー入力があるまで繰り返し
     while (cvWaitKey (p->wait_ms) == -1) {
         frame = cvQueryFrame (capture);
         frame2 = cvGamma(frame,  cvGetTrackbarPos(GAMMA_TRACKBAR_NAME, p->title));
-        switch (p->filter) {
+        //switch (p->filter) {
+        switch (cvGetTrackbarPos(FILTER_TRACKBAR_NAME, p->title)) {
             case 1:
                 frame3 = filter(frame2);
                 break;
             case 2:
                 frame3 = conv_ohtsu(frame2);
                 break;
+
             default:
+
+                // フィルタ処理と顔認識処理は同時に行わない
+                if (p->face_detect && ctx) {
+                    // 顔認識を行い顔の位置に矩形を描画
+                    face_detect(ctx, frame2);
+                }
+
                 frame3 = frame2;
         }
+
+        // 描画した画像を表示
         cvShowImage (p->title, frame3);
 
         if (p->vw) {
@@ -150,6 +256,11 @@ void cap (
         frame3 = frame2 = 0;
     }
     cvReleaseCapture (&capture);
+
+    if (p->face_detect && ctx) {
+        release_fd_ctx(ctx);
+        ctx = 0;
+    }
 }
 
 void videocap(param *p) {
@@ -172,8 +283,11 @@ void videocap(param *p) {
         );
     }
 
-    cvNamedWindow (p->title, CV_WINDOW_AUTOSIZE);
+    //cvNamedWindow (p->title, CV_WINDOW_AUTOSIZE);
+
+    cvNamedWindow (p->title, CV_WINDOW_NORMAL);
     cvCreateTrackbar(GAMMA_TRACKBAR_NAME, p->title, &gamma_value, 3, NULL);
+    cvCreateTrackbar(FILTER_TRACKBAR_NAME, p->title, &p->filter, 2, NULL);
     cap(p);
     cvDestroyWindow (p->title);
 

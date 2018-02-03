@@ -22,16 +22,19 @@ const (
 	default_height = 480
 	default_wait_ms = 100
 	default_filter = 0
+	default_face_detect = true
 )
 
 var cam_idx, width, height, wait_ms int
 var size, filepath string
+var face_detect bool
 var filter int
 
 func main() {
+	fmt.Println("Enter any key to quit.")
 	initialize()
-	videocap(cam_idx, width, height, wait_ms, filter, filepath)
-	fmt.Println("done.")
+	videocap(cam_idx, width, height, wait_ms, filter, face_detect, filepath)
+	fmt.Println("Bye.")
 }
 
 func initialize() {
@@ -40,6 +43,7 @@ func initialize() {
 	flag.IntVar(&cam_idx, "cam_idx", default_cam_idx, "the camera index to use")
 	flag.StringVar(&filepath, "file", default_filepath, "the path to record video")
 	flag.IntVar(&wait_ms, "wait_ms", default_wait_ms, "the interval ms")
+	flag.BoolVar(&face_detect, "face_detect", default_face_detect, "the flag to use face detection")
 	flag.Parse()
 	width = default_width
 	height = default_height
@@ -50,22 +54,22 @@ func initialize() {
 }
 
 func parse_size(s string) (w, h int, ok bool) {
-	fmt.Println(s)
+	//fmt.Println(s)
 	ok = false
 	pos := strings.Index(s, "x")
 	if pos<=0 {
-		fmt.Println("1")
+		//fmt.Println("1")
 		return
 	}
 	tmp, err := strconv.Atoi(s[0:pos])
 	if err != nil {
-		fmt.Println("2")
+		//fmt.Println("2")
 		return
 	}
 	w = tmp
 	tmp, err = strconv.Atoi(s[pos+1:])
 	if err != nil {
-		fmt.Println("3")
+		//fmt.Println("3")
 		return
 	}
 	h = tmp
@@ -73,18 +77,23 @@ func parse_size(s string) (w, h int, ok bool) {
 	return
 }
 
-func videocap(cam_idx, w, h, wait_ms, filter int, filepath...string) {
+func videocap(cam_idx, w, h, wait_ms, filter int, face_detect bool, filepath...string) {
 	filepath_ := ""
 	if len(filepath)>0 {
 		filepath_ = filepath[0]
 	}
 	filepath_c := C.CString(filepath_)
 	defer C.free(unsafe.Pointer(filepath_c))
+	face_detect_c := C.int(0)
+	if face_detect {
+		face_detect_c = C.int(1)
+	}
 	p := C.new_param(
 		C.int(cam_idx), 
 		C.int(w), 
 		C.int(h), 
 		C.int(wait_ms), 
+		face_detect_c,
 		C.int(filter), 
 		filepath_c)
 	defer C.release_param(&p)

@@ -1,22 +1,24 @@
 # videocap
 
-## 概要
+## Description
 
-* カメラでキャプチャした画像を表示する。
+* This software displays frames captured from camera.
 
-## ビルド
+## How to build
 
 ```
 go build
 ```
 
-## コマンドオプション
+## Command Line Options
 
 ```
 C:\>videocap -h
 Usage of videocap:
   -cam_idx int
         the camera index to use
+  -face_detect
+        the flag to use face detection (default true)
   -file string
         the path to record video
   -filter int
@@ -26,3 +28,13 @@ Usage of videocap:
   -wait_ms int
         the interval ms (default 100)
 ```
+
+# Screenshots
+
+* Using filter 1
+
+![filter1](fig1.png "filter1")
+
+* Using filter 2
+
+![filter2](fig2.png "filter2")
