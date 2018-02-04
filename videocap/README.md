@@ -2,9 +2,25 @@
 
 ## Description
 
-* This software displays frames captured from camera.
+This software displays frames captured from camera.
+
+## Install OpenCV
+
+This software requires OpenCV2.X.
+
+### MacOS Sierra
+
+```
+$ brew update
+$ brew install -v cmake
+$ brew tap homebrew/science
+$ brew install opencv@2
+$ export PKG_CONFIG_PATH=/usr/local/opt/opencv@2/lib/pkgconfig
+```
 
 ## How to build
+
+Enter following command under videocap folder.
 
 ```
 go build
