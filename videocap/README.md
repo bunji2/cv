@@ -13,6 +13,7 @@ This software requires OpenCV2.X.
 ```
 $ brew update
 $ brew install -v cmake
+$ brew install -v pkg-config
 $ brew tap homebrew/science
 $ brew install opencv@2
 $ export PKG_CONFIG_PATH=/usr/local/opt/opencv@2/lib/pkgconfig
