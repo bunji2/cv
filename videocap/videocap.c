@@ -221,8 +221,12 @@ void cap (
     // キー入力があるまで繰り返し
     while (cvWaitKey (p->wait_ms) == -1) {
         frame = cvQueryFrame (capture);
+        if (!frame) {
+            continue;
+        }
+
         frame2 = cvGamma(frame,  cvGetTrackbarPos(GAMMA_TRACKBAR_NAME, p->title));
-        //switch (p->filter) {
+
         switch (cvGetTrackbarPos(FILTER_TRACKBAR_NAME, p->title)) {
             case 1:
                 frame3 = filter(frame2);
@@ -297,14 +301,3 @@ void videocap(param *p) {
     }
 
 }
-
-/*
-int main (int argc, char **argv)
-{
-    char *title = "Cap";
-    cvNamedWindow (title, CV_WINDOW_AUTOSIZE);
-    cap(argc == 2 ? argv[1][0] - '0' : 0, title, 640, 480, 100, foo);
-    cvDestroyWindow (title);
-    return 0;
-}
-*/
