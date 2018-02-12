@@ -1,2 +1,3 @@
 # cv
-opencv sample for GoLang
+opencv samples of GoLang, C, and C++ for my study.
+
