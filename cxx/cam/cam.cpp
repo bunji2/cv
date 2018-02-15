@@ -1,5 +1,6 @@
 #include <iostream>
 #include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <stdio.h>
 #include <time.h>
@@ -109,14 +110,29 @@ videocap(videocap_param *p)
 //  cv::namedWindow("Capture", CV_WINDOW_AUTOSIZE|CV_WINDOW_FREERATIO);
     cv::namedWindow("Capture", CV_WINDOW_NORMAL);
     cv::Mat frame;
+    cv::Mat gray_img;
+    // 適応的な閾値処理
+    cv::Mat adaptive_img;
+    cv::Mat bin_img;
+    cv::Mat dst_img;
+
     while(cv::waitKey(p->wait_ms)<0) {
         cap >> frame;  // キャプチャ
         // 様々な処理
         // ...
+        cvtColor(frame, gray_img, CV_BGR2GRAY);
+        cv::threshold(gray_img, bin_img, 0, 255, cv::THRESH_BINARY|cv::THRESH_OTSU);
+        //cv::threshold(gray_img, bin_img, 0, 255, cv::THRESH_BINARY);
+        cv::adaptiveThreshold(gray_img, adaptive_img, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 7, 8);
+        cv::bitwise_and(adaptive_img, bin_img, dst_img);
+        cvtColor (dst_img, dst_img, CV_GRAY2BGR);
+        cv::bitwise_and(dst_img, frame, dst_img);
         if (p->disp_time) {
-            put_time_str(frame, p->w, p->h);
+            //put_time_str(frame, p->w, p->h);
+            put_time_str(dst_img, p->w, p->h);
         }
-        cv::imshow("Capture", frame); // 表示
+        //cv::imshow("Capture", frame); // 表示
+        cv::imshow("Capture", dst_img); // 表示
     }
     cv::imwrite(p->img_file, frame);
     return 0;
