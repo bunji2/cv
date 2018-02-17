@@ -2,7 +2,7 @@
 
 ## Description
 
-This software displays frames captured from camera using OpenCV2 C API.
+This software displays frames captured from camera using OpenCV1 C API.
 
 ## Install OpenCV
 
