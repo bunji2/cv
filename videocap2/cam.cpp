@@ -109,6 +109,16 @@ get_videocap_param_str(videocap_param* p, int name) {
     return NULL;
 }
 
+void
+save_frame(cv::Mat &frame) {
+    char buff[24] = {};
+    time_t now = time(NULL);
+    struct tm *pnow = localtime(&now);
+    sprintf(buff, "out%04d%02d%02d_%02d%02d%02d.png", pnow->tm_year + 1900, pnow->tm_mon + 1, pnow->tm_mday,
+    pnow->tm_hour, pnow->tm_min, pnow->tm_sec);
+    cv::imwrite(buff, frame);
+}
+
 // filter to put a current time
 void
 put_time_str(cv::Mat &frame, int w, int h) {
@@ -187,6 +197,15 @@ gamma_correction(cv::Mat &frame, int gamma) {
     cv::LUT(frame, lutmat, frame);
 }
 
+static int save_flag = 0;
+
+void
+onMouse( int event, int x, int y, int flag, void* p){
+    if (event == cv::EVENT_LBUTTONUP) {
+        save_flag = 1;
+    }
+}
+
 int
 videocap(videocap_param *p)
 {
@@ -200,6 +219,9 @@ videocap(videocap_param *p)
         return -1;
     }
 
+    cv::Mat frame;
+    //cv::Mat dst;
+
 //  cv::namedWindow(WINDOW_TITLE, CV_WINDOW_AUTOSIZE|CV_WINDOW_FREERATIO);
     cv::namedWindow(WINDOW_TITLE, CV_WINDOW_NORMAL);
 
@@ -209,9 +231,8 @@ videocap(videocap_param *p)
         FILTER_MAX, NULL, NULL);
     cv::createTrackbar(TRACKBAR_medianblur, WINDOW_TITLE, &p->medianblur,
         MEDIANBLUR_MAX, NULL, NULL);
+    cv::setMouseCallback(WINDOW_TITLE, onMouse, 0);
 
-    cv::Mat frame;
-    //cv::Mat dst;
 
     while(cv::waitKey(p->wait_ms)<0) {
         cap >> frame;
@@ -252,6 +273,13 @@ videocap(videocap_param *p)
             //put_time_str(dst, p->w, p->h);
             put_time_str(frame, p->w, p->h);
         }
+
+        if (save_flag) {
+            //cv::imwrite(p->img_file, frame);
+            save_frame(frame);
+            save_flag = 0;
+        }
+
         //cv::imshow(WINDOW_TITLE, dst);
         cv::imshow(WINDOW_TITLE, frame);
     }
