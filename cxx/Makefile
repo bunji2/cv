@@ -2,7 +2,9 @@
 
 TARGETS=s1.exe \
 	s2.exe \
-	s2a.exe
+	s2a.exe \
+	bin.exe \
+	bin2.exe
 
 CFLAGS=-D_GLIBCXX_USE_CXX11_ABI=0 \
 	-IC:/opencv_libs/opencv-2.4.13.5/include
