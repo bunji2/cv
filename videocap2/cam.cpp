@@ -215,6 +215,8 @@ videocap(videocap_param *p)
     p->w = (int)cap.get(CV_CAP_PROP_FRAME_WIDTH);
     p->h = (int)cap.get(CV_CAP_PROP_FRAME_HEIGHT);
 
+    std::cout << "Size:" << p->w << "x" << p->h << std::endl;
+
     if(!cap.isOpened()) {
         return -1;
     }
@@ -236,6 +238,10 @@ videocap(videocap_param *p)
 
     while(cv::waitKey(p->wait_ms)<0) {
         cap >> frame;
+
+        if (frame.empty()) {
+            continue;
+        }
 
         p->gamma = cv::getTrackbarPos(TRACKBAR_gamma, WINDOW_TITLE);
         p->filter = cv::getTrackbarPos(TRACKBAR_filter, WINDOW_TITLE);
